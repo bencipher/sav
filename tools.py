@@ -16,8 +16,8 @@ load_dotenv()
 
 
 llm = GoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0)
-# graph = Neo4jGraph(url=os.environ["NEO4J_URI"], username=os.environ["NEO4J_USERNAME"],
-#                    password=os.environ["NEO4J_PASSWORD"], database="neo4j")
+graph = Neo4jGraph(url=os.environ["NEO4J_URI"], username=os.environ["NEO4J_USERNAME"],
+                   password=os.environ["NEO4J_PASSWORD"], database="neo4j")
 
 class MovieSearchTool(BaseTool):
     name: str = "search_movie_knowledge_graph"
@@ -36,7 +36,7 @@ class MovieSearchTool(BaseTool):
     ) -> dict[str]:
         """Use the tool."""
 
-        chain = GraphCypherQAChain.from_llm(graph=graph_driver, llm=llm, verbose=True)
+        chain = GraphCypherQAChain.from_llm(graph=graph, llm=llm, verbose=True)
         response = chain.invoke({"query": query})
         return response
 
