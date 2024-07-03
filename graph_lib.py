@@ -1,8 +1,11 @@
 import os
 
 import langchain
+from langchain_core.documents import Document
 from langchain_experimental.graph_transformers import LLMGraphTransformer
+from langchain_google_genai import GoogleGenerativeAI
 from neo4j import GraphDatabase
+from neo4j.graph import Node, Relationship
 
 from config import NODES, RELATIONSHIP
 from cypher_text import create_movie_cypher
@@ -65,33 +68,39 @@ def setup_graph_schema(llm):
     )
 
 
-def extract_and_save_node(query: str, llm) -> list[str]:
-    entities, relationships = setup_graph_schema(llm).extract(query)
-
+def extract_and_save_node(query: str, llm) -> bool:
+    outcome = setup_graph_schema(llm).convert_to_graph_documents([Document(page_content=query)])[0]
+    entities, relationships = outcome.nodes, outcome.relationships
+    print(f'{entities=}\n{relationships=}')
     try:
-        with graph_driver.session() as session:  # Establish session context
+        with graph_driver.session() as session:
             for entity in entities:
-                cypher_query = f"""
-                MERGE (n:{entity['label']} {{name: $name}})
-                SET n += $properties
-                """
-                session.run(cypher_query, name=entity['name'], properties=entity['properties'])
+                if isinstance(entity, Node):
+                    node_properties = entity.properties
+                    cypher_query = f"""
+                    MERGE (n:{entity.labels} {{name: $name}})
+                    SET n += $properties
+                    """
+                    session.run(cypher_query, name=entity['name'], properties=node_properties)
 
             for relationship in relationships:
-                cypher_query = f"""
-                MATCH (a:{relationship['start_node']['label']} {{name: $start_name}})
-                MATCH (b:{relationship['end_node']['label']} {{name: $end_name}})
-                MERGE (a)-[r:{relationship['type']}]->(b)
-                SET r += $properties
-                """
-                session.run(
-                    cypher_query,
-                    start_name=relationship['start_node']['name'],
-                    end_name=relationship['end_node']['name'],
-                    properties=relationship['properties']
-                )
+                if isinstance(relationship, Relationship):
+                    start_node_properties = relationship.start_node.properties
+                    end_node_properties = relationship.end_node.properties
+                    cypher_query = f"""
+                    MATCH (a:{relationship.start_node.labels} {{name: $start_name}})
+                    MATCH (b:{relationship.end_node.labels} {{name: $end_name}})
+                    MERGE (a)-[r:{relationship.type}]->(b)
+                    SET r += $properties
+                    """
+                    session.run(
+                        cypher_query,
+                        start_name=start_node_properties['name'],
+                        end_name=end_node_properties['name'],
+                        properties=relationship.properties
+                    )
 
-            return True
+        return True
 
     except Exception as e:
         print('Error occured while saving: ', e)
@@ -100,5 +109,7 @@ def extract_and_save_node(query: str, llm) -> list[str]:
 
 if __name__ == "__main__":
     res = extract_and_save_node(
-        "Oluwafemi was the director of Ellipsis, a film that was released in 2018, that grossed 1.2m dollars and was a scifi about africa")
+        "Oluwafemi was the director of Ellipsis, a film that was released in 2018, "
+        "that grossed 1.2m dollars and was a scifi about africa",
+        llm=GoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0))
     print(res)

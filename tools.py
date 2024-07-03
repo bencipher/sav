@@ -10,6 +10,8 @@ from typing import Type, Optional, List, Any
 
 from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import GoogleGenerativeAI
+
+from graph_lib import extract_and_save_node
 from prompt_text import CYPHER_GENERATION_TEMPLATE
 from models import MovieQuery
 
@@ -36,9 +38,9 @@ class MovieSearchTool(BaseTool):
             run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> dict[str]:
         """Use the tool."""
-        CYPHER_GENERATION_PROMPT = PromptTemplate(
-            input_variables=["schema", "question"], template=CYPHER_GENERATION_TEMPLATE
-        )
+        # CYPHER_GENERATION_PROMPT = PromptTemplate(
+        #     input_variables=["schema", "question"], template=CYPHER_GENERATION_TEMPLATE
+        # )
         chain = GraphCypherQAChain.from_llm(graph=graph, llm=llm, verbose=True)
         print("cypher prompt: ", chain.cypher_generation_chain.prompt)
 
