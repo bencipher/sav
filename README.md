@@ -157,3 +157,9 @@ Contains miscellaneous utility functions used throughout the project.
 ## Conclusion
 
 This project provides a simple RAG for interacting with a movie knowledge graph using natural language queries. By following the setup instructions, you can initialize the system with movie data and start querying the knowledge graph through an interactive chat interface. The modular design and comprehensive feature set make it a robust solution for movie information retrieval and management.
+
+
+Example queries:
+- what did Batman gross in all its franchise
+- what is the average rating for the  all the engish movies of the director of Matrix
+- who directed Pirates of the Caribbean ?
