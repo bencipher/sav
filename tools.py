@@ -24,7 +24,7 @@ graph = Neo4jGraph(url=os.environ["NEO4J_URI"], username=os.environ["NEO4J_USERN
 #     description: str = """
 #         Useful for when you need information about movies.
 #         Input should be a search query.
-#         Returns a list of search result links to be scraped.
+#         Returns a list of search result movies or associated information.
 #     """
 #
 #     args_schema: Type[BaseModel] = MovieQuery
