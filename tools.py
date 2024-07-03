@@ -3,23 +3,20 @@ import os
 from dotenv import load_dotenv
 from langchain_community.chains.graph_qa.cypher import GraphCypherQAChain
 from langchain_community.graphs import Neo4jGraph
-from langchain_core.callbacks import CallbackManagerForToolRun
-from langchain_core.pydantic_v1 import BaseModel, Field
-from langchain_core.tools import BaseTool
-from typing import Type, Optional, List, Any
+from typing import List
 
 from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import GoogleGenerativeAI
 
 from graph_lib import extract_and_save_node
 from prompt_text import CYPHER_GENERATION_TEMPLATE
-# from models import MovieQuery
 
 load_dotenv()
 
 llm = GoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0)
 graph = Neo4jGraph(url=os.environ["NEO4J_URI"], username=os.environ["NEO4J_USERNAME"],
                    password=os.environ["NEO4J_PASSWORD"], database="neo4j")
+
 
 #
 # class MovieSearchTool(BaseTool):

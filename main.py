@@ -1,16 +1,12 @@
-import os
 import streamlit as st
 from dotenv import load_dotenv
-from langchain.agents import Tool, initialize_agent, LLMSingleActionAgent, AgentExecutor
+from langchain.agents import Tool, LLMSingleActionAgent, AgentExecutor
 from langchain.chains.llm import LLMChain
-from langchain_community.graphs import Neo4jGraph
-from langchain_core.prompts import PromptTemplate, StringPromptTemplate
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from google.api_core.exceptions import ResourceExhausted
 import tiktoken
-from langchain.memory import ConversationBufferMemory, ConversationBufferWindowMemory
-from typing import List
+from langchain.memory import ConversationBufferWindowMemory
 
 from custom_prompts import CustomPromptTemplate
 from parser import CustomOutputParser
@@ -19,7 +15,6 @@ import langchain
 
 langchain.debug = False
 
-from neo4j import GraphDatabase, READ_ACCESS
 from tools import save_extra_info, movie_search_tool
 
 load_dotenv()
