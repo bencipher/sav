@@ -1,4 +1,5 @@
-CYPHER_GENERATION_TEMPLATE = """Task:Generate Cypher statement to query a graph database.
+CYPHER_GENERATION_TEMPLATE = """
+Task:Generate Cypher statement to query a graph database.
 Instructions:
 Use only the provided relationship types and properties in the schema.
 Do not use any other relationship types or properties that are not provided.
@@ -55,6 +56,18 @@ MATCH (m:Movie)
 RETURN m.title AS movie, m.revenue AS revenue
 ORDER BY revenue DESC
 LIMIT 1
+
+
+Example Question 6:
+# What did Avatar and Titanic both grossed combined?
+
+Answer:
+MATCH (m:Movie)
+WHERE m.title IN ["Avatar", "Titanic"]
+RETURN m.title AS movie, m.revenue AS revenue
+ORDER BY revenue DESC
+LIMIT 1 
+
 
 Note: Do not include any explanations or apologies in your responses.
 Use "CONTAINS" for string matching when the name of the movie is more than one words or if it contains franchise of a movie
