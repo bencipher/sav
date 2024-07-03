@@ -1,60 +1,78 @@
 import os
 import streamlit as st
 from dotenv import load_dotenv
-from langchain.agents import Tool, initialize_agent
+from langchain.agents import Tool, initialize_agent, LLMSingleActionAgent, AgentExecutor
+from langchain.chains.llm import LLMChain
 from langchain_community.graphs import Neo4jGraph
+from langchain_core.prompts import PromptTemplate, StringPromptTemplate
+
 from langchain_google_genai import ChatGoogleGenerativeAI
 from google.api_core.exceptions import ResourceExhausted
-from langchain import PromptTemplate
 import tiktoken
 from langchain.memory import ConversationBufferMemory, ConversationBufferWindowMemory
+from typing import List
+
+from custom_prompts import CustomPromptTemplate
+from parser import CustomOutputParser
 from prompt_text import agent_prompt_template
 import langchain
 
-langchain.debug = True
+langchain.debug = False
 
 from neo4j import GraphDatabase, READ_ACCESS
-from tools import MovieSearchTool, save_extra_info
+from tools import save_extra_info, movie_search_tool
 
 load_dotenv()
 
 llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0)
 tools = [
-    MovieSearchTool(),
+    # MovieSearchTool(),
     Tool(
         name="Save Extra Information",
         func=save_extra_info,
         description="Saves new information the user wants us to know about movies we don't know about",
+    ),
+    Tool(
+        name="Search All Movie Informations",
+        func=movie_search_tool,
+        description="Useful for when you need information about movies. Input should be a search query. Returns a list of search result links to be scraped"
     )
 ]
 
-memory = ConversationBufferWindowMemory(memory_key='chat_history', k=3, return_messages=True)
-prompt_template = PromptTemplate(
-    input_variables=["agent_scratchpad", "input"],
-    template=agent_prompt_template)
-
-agent = initialize_agent(
+prompt = CustomPromptTemplate(
+    template=agent_prompt_template,
     tools=tools,
-    llm=llm,
-    memory=memory,
-    agent_type="chat-conversational-react-description",
-    verbose=True,
-    return_intermediate_steps=True,
-    handle_parsing_errors=True,
-    early_stopping_method='generate',
-    prompt=prompt_template,
-    max_iterations=2,
+    input_variables=["input", "intermediate_steps", "history"]
 )
+
+llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+tool_names = [tool.name for tool in tools]
+output_parser = CustomOutputParser()
+
+agent = LLMSingleActionAgent(
+    llm_chain=llm_chain,
+    output_parser=output_parser,
+    stop=["\nObservation:"],
+    allowed_tools=tool_names
+)
+memory = ConversationBufferWindowMemory(k=3)
+print(memory.chat_memory.messages)
+
+agent_executor = AgentExecutor.from_agent_and_tools(agent=agent,
+                                                    tools=tools,
+                                                    memory=memory,
+                                                    verbose=True)
 
 
 def run_agent(query: str):
     encoding = tiktoken.encoding_for_model("gpt-4")
     input_tokens = encoding.encode(query)
-    response = agent.invoke({"input": query})
+    resp = agent_executor.run(query)
     output_tokens = encoding.encode(response["output"])
     st.write(f"Input token count: {len(input_tokens)}")
     st.write(f"Output token count: {len(output_tokens)}")
-    return response
+    return resp
 
 
 # Run the Chainlit app
@@ -71,11 +89,11 @@ if __name__ == "__main__":
         if query:
             try:
                 response = run_agent(query)
-                st.session_state.history.append({"query": query, "response": response["output"]})
+                st.session_state.history.append({"query": query, "response": response})
             except ResourceExhausted as e:
                 st.text("I have so many requests, please hold on while I generate your response...")
                 response = run_agent(query)
-                st.session_state.history.append({"query": query, "response": response["output"]})
+                st.session_state.history.append({"query": query, "response": response})
 
     # Display the last 7 messages
     for message in st.session_state.history[-7:]:

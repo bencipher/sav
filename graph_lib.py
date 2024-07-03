@@ -24,10 +24,6 @@ load_dotenv()
 CYPHER_GENERATION_PROMPT = PromptTemplate(
     input_variables=["schema", "question"], template=CYPHER_GENERATION_TEMPLATE
 )
-#
-# graph_driver = GraphDatabase.driver(os.environ["LOCAL_NEO4J_URI"],
-#                                     auth=(os.environ["LOCAL_NEO4J_USERNAME"], os.environ["LOCAL_NEO4J_PASSWORD"]))
-#
 
 graph_driver = GraphDatabase.driver(os.environ["NEO4J_URI"],
                                     auth=(os.environ["NEO4J_USERNAME"], os.environ["NEO4J_PASSWORD"]))
