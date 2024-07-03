@@ -69,7 +69,7 @@ def run_agent(query: str):
     encoding = tiktoken.encoding_for_model("gpt-4")
     input_tokens = encoding.encode(query)
     resp = agent_executor.run(query)
-    output_tokens = encoding.encode(response["output"])
+    output_tokens = encoding.encode(resp)
     st.write(f"Input token count: {len(input_tokens)}")
     st.write(f"Output token count: {len(output_tokens)}")
     return resp
