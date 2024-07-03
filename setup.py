@@ -18,6 +18,7 @@ file_path = os.environ['DATA_PATH']
 
 # create the graph schema and load data into it
 def setup_graph_kb():
+
     df = pd.read_csv(file_path)
     setup_graph_schema(llm)
     write_to_graph(df)

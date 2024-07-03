@@ -8,16 +8,17 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import BaseTool
 from typing import Type, Optional, List, Any
 
+from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import GoogleGenerativeAI
-
+from prompt_text import CYPHER_GENERATION_TEMPLATE
 from models import MovieQuery
 
 load_dotenv()
 
-
 llm = GoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0)
 graph = Neo4jGraph(url=os.environ["NEO4J_URI"], username=os.environ["NEO4J_USERNAME"],
                    password=os.environ["NEO4J_PASSWORD"], database="neo4j")
+
 
 class MovieSearchTool(BaseTool):
     name: str = "search_movie_knowledge_graph"
@@ -35,8 +36,12 @@ class MovieSearchTool(BaseTool):
             run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> dict[str]:
         """Use the tool."""
-
+        CYPHER_GENERATION_PROMPT = PromptTemplate(
+            input_variables=["schema", "question"], template=CYPHER_GENERATION_TEMPLATE
+        )
         chain = GraphCypherQAChain.from_llm(graph=graph, llm=llm, verbose=True)
+        print("cypher prompt: ", chain.cypher_generation_chain.prompt)
+
         response = chain.invoke({"query": query})
         return response
 
@@ -49,4 +54,7 @@ class MovieSearchTool(BaseTool):
 
 
 def save_extra_info(query: str) -> List[str]:
-    pass
+    if extract_and_save_node(query, llm):
+        return ["Saved extra information"]
+
+    return ["I can't save extra information at the moment"]
