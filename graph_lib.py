@@ -79,12 +79,6 @@ def extract_and_save_node(query: str, llm) -> bool:
     entities, relationships = outcome.nodes, outcome.relationships
     with graph_driver.session() as session:
         for entity in entities:
-            try:
-                if "." in entity.id or isinstance(int(entity.id), (int, float, complex)):
-                    entity_id = f"Value_{str(entity.id).replace('.', '_')}"
-            except ValueError:
-                entity_id = entity.id
-            label = entity.type
             node_properties = entity.properties
             cypher_query = f"""
             MERGE (n:{label} {{name: $name}})
@@ -112,8 +106,8 @@ def extract_and_save_node(query: str, llm) -> bool:
 
 if __name__ == "__main__":
     res = extract_and_save_node(
-        "Oluwafemi was the director of Ellipsis, a film that was released in 2018, "
-        "that grossed 1.2m dollars and was a scifi about africa",
+        "Oluwafemi was the director of Aquaman Africa, a film that was released in 2024, "
+        "that grossed 1.2m dollars and was a scifi about africa, it also costed them 500k usd to make",
         llm=GoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0))
 
     print(res)
