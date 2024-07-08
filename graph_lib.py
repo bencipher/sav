@@ -79,6 +79,8 @@ def extract_and_save_node(query: str, llm) -> bool:
     entities, relationships = outcome.nodes, outcome.relationships
     with graph_driver.session() as session:
         for entity in entities:
+
+            label = entity.type
             node_properties = entity.properties
             cypher_query = f"""
             MERGE (n:{label} {{name: $name}})
