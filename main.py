@@ -10,7 +10,7 @@ from langchain.memory import ConversationBufferWindowMemory
 
 from custom_prompts import CustomPromptTemplate
 from parser import CustomOutputParser
-from prompt_text import agent_prompt_template
+from template import AGENT_TEMPLATE
 import langchain
 
 langchain.debug = False
@@ -35,7 +35,7 @@ tools = [
 ]
 
 prompt = CustomPromptTemplate(
-    template=agent_prompt_template,
+    template=AGENT_TEMPLATE,
     tools=tools,
     input_variables=["input", "intermediate_steps", "history"]
 )
@@ -52,7 +52,6 @@ agent = LLMSingleActionAgent(
     allowed_tools=tool_names
 )
 memory = ConversationBufferWindowMemory(k=3)
-print(memory.chat_memory.messages)
 
 agent_executor = AgentExecutor.from_agent_and_tools(agent=agent,
                                                     tools=tools,

@@ -9,7 +9,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import GoogleGenerativeAI
 
 from graph_lib import extract_and_save_node
-from prompt_text import CYPHER_GENERATION_TEMPLATE
+from template import CYPHER_TEMPLATE
 
 load_dotenv()
 
@@ -55,7 +55,7 @@ graph = Neo4jGraph(url=os.environ["NEO4J_URI"], username=os.environ["NEO4J_USERN
 def movie_search_tool(query: str):
     """Use the tool."""
     cypher_prompt = PromptTemplate(
-        input_variables=["schema", "question"], template=CYPHER_GENERATION_TEMPLATE
+        input_variables=["schema", "question"], template=CYPHER_TEMPLATE
     )
     chain = GraphCypherQAChain.from_llm(graph=graph, llm=llm, verbose=True, prompt_text=cypher_prompt)
 

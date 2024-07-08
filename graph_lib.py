@@ -5,11 +5,11 @@ from langchain_core.documents import Document
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_google_genai import GoogleGenerativeAI
 from neo4j import GraphDatabase
-from neo4j.graph import Node, Relationship
 
 from config import NODES, RELATIONSHIP
 from cypher_text import create_movie_cypher
-from prompt_text import CYPHER_GENERATION_TEMPLATE
+from template import CYPHER_TEMPLATE
+from utils import create_graph_extract_prompt
 
 langchain.debug = True
 
@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 CYPHER_GENERATION_PROMPT = PromptTemplate(
-    input_variables=["schema", "question"], template=CYPHER_GENERATION_TEMPLATE
+    input_variables=["schema", "question"], template=CYPHER_TEMPLATE
 )
 
 graph_driver = GraphDatabase.driver(os.environ["NEO4J_URI"],
@@ -57,50 +57,57 @@ def write_to_graph(df):
 
 
 def setup_graph_schema(llm):
-    return LLMGraphTransformer(
+    transformer = LLMGraphTransformer(
         llm=llm,
-        allowed_nodes=NODES,
-        allowed_relationships=RELATIONSHIP
+        prompt=create_graph_extract_prompt(NODES, RELATIONSHIP),
     )
+    return transformer
+
+
+def make_valid_label(label):
+    try:
+        if '.' in str(label):
+            return f"Value_{str(label).replace('.', '_')}"
+        else:
+            return f"Value_{int(label)}"
+    except ValueError:
+        return str(label)
 
 
 def extract_and_save_node(query: str, llm) -> bool:
     outcome = setup_graph_schema(llm).convert_to_graph_documents([Document(page_content=query)])[0]
     entities, relationships = outcome.nodes, outcome.relationships
-    print(f'{entities=}\n{relationships=}')
-    try:
-        with graph_driver.session() as session:
-            for entity in entities:
-                if isinstance(entity, Node):
-                    node_properties = entity.properties
-                    cypher_query = f"""
-                    MERGE (n:{entity.labels} {{name: $name}})
-                    SET n += $properties
-                    """
-                    session.run(cypher_query, name=entity['name'], properties=node_properties)
+    with graph_driver.session() as session:
+        for entity in entities:
+            try:
+                if "." in entity.id or isinstance(int(entity.id), (int, float, complex)):
+                    entity_id = f"Value_{str(entity.id).replace('.', '_')}"
+            except ValueError:
+                entity_id = entity.id
+            label = entity.type
+            node_properties = entity.properties
+            cypher_query = f"""
+            MERGE (n:{label} {{name: $name}})
+            """
+            if node_properties:
+                cypher_query += "SET n += $properties"
+            session.run(cypher_query, name=entity.id, properties=node_properties)
 
-            for relationship in relationships:
-                if isinstance(relationship, Relationship):
-                    start_node_properties = relationship.start_node.properties
-                    end_node_properties = relationship.end_node.properties
-                    cypher_query = f"""
-                    MATCH (a:{relationship.start_node.labels} {{name: $start_name}})
-                    MATCH (b:{relationship.end_node.labels} {{name: $end_name}})
-                    MERGE (a)-[r:{relationship.type}]->(b)
-                    SET r += $properties
-                    """
-                    session.run(
-                        cypher_query,
-                        start_name=start_node_properties['name'],
-                        end_name=end_node_properties['name'],
-                        properties=relationship.properties
-                    )
+        for relationship in relationships:
 
-        return True
-
-    except Exception as e:
-        print('Error occured while saving: ', e)
-        return False
+            cypher_query = f"""
+            MATCH (a:{relationship.source.type} {{name: $start_name}})
+            MATCH (b:{relationship.target.type} {{name: $end_name}})
+            MERGE (a)-[r:{relationship.type}]->(b)
+            SET r += $properties
+            """
+            session.run(
+                cypher_query,
+                start_name=relationship.source.id,
+                end_name=relationship.target.id,
+                properties=relationship.properties
+            )
+    return True
 
 
 if __name__ == "__main__":
@@ -108,4 +115,5 @@ if __name__ == "__main__":
         "Oluwafemi was the director of Ellipsis, a film that was released in 2018, "
         "that grossed 1.2m dollars and was a scifi about africa",
         llm=GoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0))
+
     print(res)
