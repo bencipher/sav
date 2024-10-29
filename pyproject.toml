@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "ai moviechat app"
+version = "0.1.0"
+description = "An AI app that chats with you about movies, where you can tell it about new movies and help it gain more knowledge."
+authors = ["bcx <femolak@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+tiktoken = "^0.8.0"
+langchain-experimental = "^0.3.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

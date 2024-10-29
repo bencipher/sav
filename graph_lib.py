@@ -3,12 +3,10 @@ import os
 import langchain
 from langchain_core.documents import Document
 from langchain_experimental.graph_transformers import LLMGraphTransformer
-from langchain_google_genai import GoogleGenerativeAI
-from neo4j import GraphDatabase
 
-from config import NODES, RELATIONSHIP
+from config import NODES, RELATIONSHIP, graph_driver, llm
 from cypher_text import create_movie_cypher
-from template import CYPHER_TEMPLATE
+from template import CYPHER_GENERATION_TEMPLATE
 from utils import create_graph_extract_prompt
 
 langchain.debug = True
@@ -17,16 +15,9 @@ from langchain.graphs import Neo4jGraph
 from langchain.chains import GraphCypherQAChain
 from langchain.prompts.prompt import PromptTemplate
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
 CYPHER_GENERATION_PROMPT = PromptTemplate(
-    input_variables=["schema", "question"], template=CYPHER_TEMPLATE
+    input_variables=["schema", "question"], template=CYPHER_GENERATION_TEMPLATE
 )
-
-graph_driver = GraphDatabase.driver(os.environ["NEO4J_URI"],
-                                    auth=(os.environ["NEO4J_USERNAME"], os.environ["NEO4J_PASSWORD"]))
 
 
 def query_movie_kb(query: str, graph: Neo4jGraph, llm) -> str:
@@ -56,7 +47,7 @@ def write_to_graph(df):
         print("Done")
 
 
-def setup_graph_schema(llm):
+def setup_graph_schema():
     transformer = LLMGraphTransformer(
         llm=llm,
         prompt=create_graph_extract_prompt(NODES, RELATIONSHIP),
@@ -74,12 +65,11 @@ def make_valid_label(label):
         return str(label)
 
 
-def extract_and_save_node(query: str, llm) -> bool:
+def extract_and_save_node(query: str) -> bool:
     outcome = setup_graph_schema(llm).convert_to_graph_documents([Document(page_content=query)])[0]
     entities, relationships = outcome.nodes, outcome.relationships
     with graph_driver.session() as session:
         for entity in entities:
-
             label = entity.type
             node_properties = entity.properties
             cypher_query = f"""
@@ -90,7 +80,6 @@ def extract_and_save_node(query: str, llm) -> bool:
             session.run(cypher_query, name=entity.id, properties=node_properties)
 
         for relationship in relationships:
-
             cypher_query = f"""
             MATCH (a:{relationship.source.type} {{name: $start_name}})
             MATCH (b:{relationship.target.type} {{name: $end_name}})
@@ -110,6 +99,6 @@ if __name__ == "__main__":
     res = extract_and_save_node(
         "Oluwafemi was the director of Aquaman Africa, a film that was released in 2024, "
         "that grossed 1.2m dollars and was a scifi about africa, it also costed them 500k usd to make",
-        llm=GoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0))
+    )
 
     print(res)
