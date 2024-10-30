@@ -5,6 +5,7 @@ from langchain_google_genai import GoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from dotenv import load_dotenv
+from neo4j import GraphDatabase, READ_ACCESS
 
 load_dotenv()
 NODES = {

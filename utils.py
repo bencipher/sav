@@ -70,3 +70,5 @@ def create_graph_extract_prompt(
         [system_message, human_message_prompt]
     )
     return chat_prompt
+
+
