@@ -44,7 +44,7 @@ RELATIONSHIP = {
     "CURRENT_STATUS": {"from": "Movie", "to": "Status", "weight": 1.0}
 }
 
-provider = os.environ.get('MODEL', None)
+provider = os.environ.get('MODEL', 'google')
 if not provider:
     raise Exception('Set the LLM provider to use, choices between Google or openai in env variable or wherever')
 if provider == 'openai':
