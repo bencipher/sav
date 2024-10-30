@@ -81,7 +81,7 @@ if __name__ == "__main__":
     if st.button("Send"):
         if api_key:
             set_environment_variable("API_KEY", api_key)
-            set_environment_variable("MODEL", model)
+            set_environment_variable("LLM_PROVIDER", model)
             if validate_api_key(api_key, model):
                 st.success("API Key and model have been set and validated successfully.")
             else:
