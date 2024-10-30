@@ -76,7 +76,7 @@ if __name__ == "__main__":
     if "history" not in st.session_state:
         st.session_state.history = []
 
-    query = st.text_input("Enter your question about movies:")
+    query = st.text_input("Chat with the IMDB AI")
 
     if st.button("Send"):
         if api_key:
