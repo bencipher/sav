@@ -47,7 +47,7 @@ RELATIONSHIP = {
 
 def get_llm():
     print(f'Provider: {os.getenv('LLM_PROVIDER')}')
-    provider = os.getenv('LLM_PROVIDER').lower()
+    provider = os.getenv('LLM_PROVIDER', 'gemini').lower()
     if provider == 'openai':
         return ChatOpenAI(model_name='gpt-4o-mini', temperature=0, api_key=os.getenv('API_KEY'))
     elif provider == 'gemini':
