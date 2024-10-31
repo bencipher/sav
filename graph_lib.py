@@ -66,7 +66,7 @@ def make_valid_label(label):
 
 
 def extract_and_save_node(query: str) -> bool:
-    outcome = setup_graph_schema(llm).convert_to_graph_documents([Document(page_content=query)])[0]
+    outcome = setup_graph_schema().convert_to_graph_documents([Document(page_content=query)])[0]
     entities, relationships = outcome.nodes, outcome.relationships
     with graph_driver.session() as session:
         for entity in entities:
