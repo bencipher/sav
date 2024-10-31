@@ -4,7 +4,7 @@ import langchain
 from langchain_core.documents import Document
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 
-from config import NODES, RELATIONSHIP, graph_driver, llm
+from config import NODES, RELATIONSHIP, graph_driver, get_llm
 from cypher_text import create_movie_cypher
 from template import CYPHER_GENERATION_TEMPLATE
 from utils import create_graph_extract_prompt
@@ -18,7 +18,7 @@ from langchain.prompts.prompt import PromptTemplate
 CYPHER_GENERATION_PROMPT = PromptTemplate(
     input_variables=["schema", "question"], template=CYPHER_GENERATION_TEMPLATE
 )
-
+llm = get_llm()
 
 def query_movie_kb(query: str, graph: Neo4jGraph, llm) -> str:
     chain = GraphCypherQAChain.from_llm(graph=graph, llm=llm, verbose=True, )

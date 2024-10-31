@@ -8,14 +8,14 @@ from langchain.chains.llm import LLMChain
 
 import tiktoken
 
-from config import memory, llm
+from config import memory, get_llm
 from parser import CustomOutputParser
 from prompts import CustomPromptTemplate
 from template import AGENT_TEMPLATE
 from tools import tools
 
 load_dotenv()
-
+llm = get_llm()
 langchain.debug = os.environ.get('DEBUG')
 output_parser = CustomOutputParser()
 
@@ -81,10 +81,6 @@ if __name__ == "__main__":
         if api_key:
             set_environment_variable("API_KEY", api_key)
             set_environment_variable("LLM_PROVIDER", model)
-            # if validate_api_key(api_key, model):
-            #     st.success("API Key and model have been set and validated successfully.")
-            # else:
-            #     st.error("Invalid API Key or insufficient tokens. Please check and try again.")
         else:
             st.error("Please enter a valid API Key for your selected model.")
         if query:
@@ -100,4 +96,3 @@ if __name__ == "__main__":
     for idx, message in enumerate(st.session_state.history[-7:]):
         st.text(f'User: {message['query']}')
         st.text(f'IMDB Robot: {message['response']}')
-        # st.write_stream(f"IMDB Robot: {message['response']}")

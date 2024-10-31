@@ -44,13 +44,17 @@ RELATIONSHIP = {
     "CURRENT_STATUS": {"from": "Movie", "to": "Status", "weight": 1.0}
 }
 
-provider = os.environ.get('MODEL', 'google')
-if not provider:
-    raise Exception('Set the LLM provider to use, choices between Google or openai in env variable or wherever')
-if provider == 'openai':
-    llm = ChatOpenAI(model_name='gpt-4o-mini', temperature=0)
-elif provider == 'google':
-    llm = GoogleGenerativeAI(model='gemini-1.5-pro', temperature=0)
+
+def get_llm():
+    print(f'Provider: {os.getenv('LLM_PROVIDER')}')
+    provider = os.getenv('LLM_PROVIDER').lower()
+    if provider == 'openai':
+        return ChatOpenAI(model_name='gpt-4o-mini', temperature=0, api_key=os.getenv('API_KEY'))
+    elif provider == 'gemini':
+        return GoogleGenerativeAI(model='gemini-1.5-pro', temperature=0, api_key=os.getenv('API_KEY'))
+    else:
+        raise Exception("Invalid LLM provider specified in environment.")
+
 
 graph = Neo4jGraph()
 memory = ConversationBufferMemory(memory_key="chat_history")
