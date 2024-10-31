@@ -11,7 +11,7 @@ from utils import create_graph_extract_prompt
 
 langchain.debug = True
 
-from langchain.graphs import Neo4jGraph
+from langchain_community.graphs import Neo4jGraph
 from langchain.chains import GraphCypherQAChain
 from langchain.prompts.prompt import PromptTemplate
 

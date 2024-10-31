@@ -1,10 +1,8 @@
 import os
 from dotenv import set_key, load_dotenv
 import requests
-# Load environment variables from .env file if it exists
 import streamlit as st
 import langchain
-from dotenv import load_dotenv
 from langchain.agents import LLMSingleActionAgent, AgentExecutor
 from langchain.chains.llm import LLMChain
 
@@ -39,14 +37,15 @@ agent_executor = AgentExecutor.from_agent_and_tools(
 )
 
 
-def run_agent(query: str):
+def run_agent(question: str) -> str:
     encoding = tiktoken.encoding_for_model("gpt-4")
-    input_tokens = encoding.encode(query)
-    response = agent_executor.invoke(input=query)
-    output_tokens = encoding.encode(response)
+    input_tokens = encoding.encode(question)
+    res = agent_executor.invoke(input=question).get('output')
+    # print(f'{res=}') #res=<generator object AgentExecutor.stream at 0x00000246F5785EA0>
+    output_tokens = encoding.encode(res)
     st.write(f"Input token count: {len(input_tokens)}")
     st.write(f"Output token count: {len(output_tokens)}")
-    return response
+    return res
 
 
 def set_environment_variable(key, value):
@@ -82,10 +81,10 @@ if __name__ == "__main__":
         if api_key:
             set_environment_variable("API_KEY", api_key)
             set_environment_variable("LLM_PROVIDER", model)
-            if validate_api_key(api_key, model):
-                st.success("API Key and model have been set and validated successfully.")
-            else:
-                st.error("Invalid API Key or insufficient tokens. Please check and try again.")
+            # if validate_api_key(api_key, model):
+            #     st.success("API Key and model have been set and validated successfully.")
+            # else:
+            #     st.error("Invalid API Key or insufficient tokens. Please check and try again.")
         else:
             st.error("Please enter a valid API Key for your selected model.")
         if query:
@@ -98,6 +97,7 @@ if __name__ == "__main__":
                 st.session_state.history.append({"query": query, "response": response})
 
     # Display the last 7 messages
-    for message in st.session_state.history[-7:]:
-        st.text(f"User: {message['query']}")
-        st.text(f"Bot: {message['response']}")
+    for idx, message in enumerate(st.session_state.history[-7:]):
+        st.text(f'User: {message['query']}')
+        st.text(f'IMDB Robot: {message['response']}')
+        # st.write_stream(f"IMDB Robot: {message['response']}")

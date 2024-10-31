@@ -1,10 +1,9 @@
-from langchain import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 from langchain.chains import GraphCypherQAChain
 from langchain.agents import Tool
 from config import graph, llm
 from graph_lib import extract_and_save_node
 from template import CYPHER_GENERATION_TEMPLATE, QA_TEMPLATE
-from typing import List
 
 cypher_prompt = PromptTemplate(
     input_variables=["schema", "question"], template=CYPHER_GENERATION_TEMPLATE
