@@ -16,6 +16,7 @@ langchain-google-genai = "^2.0.3"
 neo4j = "^5.25.0"
 requests = "^2.32.3"
 json-repair = "^0.30.0"
+langchain-groq = "^0.2.1"
 
 
 [build-system]

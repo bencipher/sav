@@ -1,22 +1,30 @@
-CYPHER_GENERATION_TEMPLATE = """Task:Generate Cypher statement to query a graph database.
+CYPHER_GENERATION_TEMPLATE = """Task: Generate Cypher statement to query a graph database.
 Instructions:
-Use only the provided relationship types and properties in the schema.
-Do not use any other relationship types or properties that are not provided.
+- Use only the provided relationship types and properties in the schema.
+- Do not use any other relationship types or properties that are not provided.
+- Use "CONTAINS" instead of "MATCH" for all movie title string matches.
+- Convert both the movie title and search term to lowercase using `toLower` for case-insensitive matching.
+- If the user’s request is ambiguous, confirm whether the input is a person’s name or a movie title.
+- Respond only to requests asking for a Cypher statement; ignore all other types of questions.
+- Only output the generated Cypher statement without any additional text.
+- Do not include any explanations or apologies in your responses.
+
 Schema:
 {schema}
+
 Cypher examples:
 
 #Example Questions 1:
-Who directed Pirates of the Carribean?
-who was the director of Pirates of the Carribean?
-who directed the movie Pirates of the Carribean?
-who was the director of the movie Pirates of the Carribean?
-Pirates of the Carribean movie was directed by who?
-Pirates of the Carribean was directed by who?
+Who directed Pirates of the Caribbean?
+who was the director of Pirates of the Caribbean?
+who directed the movie Pirates of the Caribbean?
+who was the director of the movie Pirates of the Caribbean?
+Pirates of the Caribbean movie was directed by who?
+Pirates of the Caribbean was directed by who?
 
 Answer:
 MATCH (p:Person)-[:DIRECTED]->(m:Movie)
-WHERE m.title CONTAINS "Pirates of the Carribean"
+WHERE toLower(m.title) CONTAINS toLower("Pirates of the Caribbean")
 RETURN p.name AS director, m.title AS movie
 
 #Example Questions 2:
@@ -28,7 +36,8 @@ Superman movie was directed by who?
 Superman was directed by who?
 
 Answer:
-MATCH (p:Person)-[:DIRECTED]->(m:Movie {{title: superman}})
+MATCH (p:Person)-[:DIRECTED]->(m:Movie)
+WHERE toLower(m.title) CONTAINS toLower("Superman")
 RETURN p.name AS director, m.title AS movie
 
 #Example Questions 3:
@@ -40,7 +49,7 @@ WHERE m.original_language = "en"
 RETURN m.title AS movie
 
 #Example Questions 4:
-Which directors directed movies in English, French or Korean?
+Which directors directed movies in English, French, or Korean?
 
 Answer:
 MATCH (p:Person)-[:DIRECTED]->(m:Movie)
@@ -56,10 +65,13 @@ RETURN m.title AS movie, m.revenue AS revenue
 ORDER BY revenue DESC
 LIMIT 1
 
-Note: Do not include any explanations or apologies in your responses.
-Ensure to use "CONTAINS" instead of "MATCH" for string matching when the name of the movie is more than one words
-Do not respond to any questions that might ask anything else than for you to construct a Cypher statement.
-Do not include any text except the generated Cypher statement.
+#Example Questions 6:
+Tell me about Pirates movie.
+
+Answer:
+MATCH (m:Movie)
+WHERE toLower(m.title) CONTAINS toLower("Pirates")
+RETURN m.title AS movie, m.release_date AS release_date, m.revenue AS revenue, m.ratings AS ratings, m.director AS director, m.crew AS crew
 
 The question is:
 {question}"""
