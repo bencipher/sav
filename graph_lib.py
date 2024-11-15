@@ -15,10 +15,6 @@ from langchain_community.graphs import Neo4jGraph
 from langchain.chains import GraphCypherQAChain
 from langchain.prompts.prompt import PromptTemplate
 
-CYPHER_GENERATION_PROMPT = PromptTemplate(
-    input_variables=["schema", "question"], template=CYPHER_GENERATION_TEMPLATE
-)
-
 
 def query_movie_kb(query: str, graph: Neo4jGraph, llm) -> str:
     chain = GraphCypherQAChain.from_llm(graph=graph, llm=llm, verbose=True, )
@@ -69,9 +65,11 @@ def extract_and_save_node(query: str, llm) -> bool:
     outcome = setup_graph_schema(llm).convert_to_graph_documents(
         [Document(page_content=query)]
     )[0]
+    print(f"{outcome=}")
     entities, relationships = outcome.nodes, outcome.relationships
     with graph_driver.session() as session:
         for entity in entities:
+            print(f"Here in {entity=}")
             label = entity.type
             node_properties = entity.properties
             cypher_query = f"""
@@ -82,6 +80,7 @@ def extract_and_save_node(query: str, llm) -> bool:
             session.run(cypher_query, name=entity.id, properties=node_properties)
 
         for relationship in relationships:
+            print(f"Inside {relationship=}")
             cypher_query = f"""
             MATCH (a:{relationship.source.type} {{name: $start_name}})
             MATCH (b:{relationship.target.type} {{name: $end_name}})
@@ -98,9 +97,27 @@ def extract_and_save_node(query: str, llm) -> bool:
 
 
 if __name__ == "__main__":
+    from dotenv import load_dotenv
+    from langchain_groq import ChatGroq
+    from langchain_google_genai import GoogleGenerativeAI
+
+    load_dotenv()
     res = extract_and_save_node(
         "Oluwafemi was the director of Aquaman Africa, a film that was released in 2024, "
         "that grossed 1.2m dollars and was a scifi about africa, it also costed them 500k usd to make",
+        # llm=ChatGroq(
+        #     model="gemma2-9b-it",
+        #     temperature=0.3,
+        #     max_tokens=None,
+        #     timeout=None,
+        #     max_retries=3,
+        #     streaming=True,
+        #     api_key=os.environ.get("GROQ_API_KEY"),
+        # ),
+        llm=GoogleGenerativeAI(
+            model="gemini-1.5-pro",
+            temperature=0.3,
+        ),
     )
 
     print(res)

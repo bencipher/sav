@@ -54,13 +54,14 @@ agent_executor = AgentExecutor.from_agent_and_tools(
     agent=LLMSingleActionAgent(
         llm_chain=langchain.chains.LLMChain(llm=llm, prompt=prompt),
         output_parser=output_parser,
-        stop=["\nObservation:"],
+        stop=["\nFinal Answer:"],
         allowed_tools=[tool.name for tool in tools],
     ),
     tools=tools,
     verbose=True,
     memory=memory,
     show_intermediate_steps=True,
+    handle_parsing_errors=True,
 )
 
 
@@ -70,15 +71,18 @@ def run_agent(question: str) -> str:
     res = agent_executor.invoke(input=question).get("output")
     output_tokens = encoding.encode(res)
     pprint(f"Input token: {len(input_tokens)}\nOutput token: {len(output_tokens)}")
-    return res
+    return res or "Too many requests, please reload and try again later"
 
 
-if query := st.chat_input("Chat with the IMDB AI"):
+if query := st.chat_input(
+    placeholder="ask your question e.g. how much did invictus gross and what was the rating?",
+):
     st.session_state.history.append({"role": "user", "content": query})
     try:
         response = run_agent(query)
         st.session_state.history.append({"role": "assistant", "content": response})
     except Exception as e:
+        print(str(e))
         st.text("Please confirm that you have tokens left on your quota...")
 
 for msg in st.session_state.history:

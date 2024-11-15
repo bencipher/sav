@@ -2,18 +2,11 @@ import os
 from langchain_core.prompts import PromptTemplate
 from langchain.chains import GraphCypherQAChain
 from langchain.agents import Tool
-from config import get_llm, graph
+from config import graph
 from graph_lib import extract_and_save_node
 
 
 from template import CYPHER_GENERATION_TEMPLATE, QA_TEMPLATE
-
-cypher_prompt = PromptTemplate(
-    input_variables=["schema", "question"], template=CYPHER_GENERATION_TEMPLATE
-)
-qa_prompt = PromptTemplate(
-    input_variables=["context", "question"], template=QA_TEMPLATE
-)
 
 
 def initialize_tools(llm):
