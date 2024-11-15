@@ -30,6 +30,13 @@ class CustomOutputParser(AgentOutputParser):
                 return_values={"output": llm_output.strip()}, log=llm_output
             )
 
+        thought_match = re.search(r"Thought:\s*(.+)", llm_output)
+        if thought_match:
+            thought_content = thought_match.group(1).strip()
+            return AgentAction(
+                tool="ProcessThought", tool_input=thought_content, log=llm_output
+            )
+
         # Parse out the action and action input
         regex = r"Action\s*:?(.+?)\s*Action\s*Input\s*:?(.+)"
         match = re.search(regex, llm_output, re.DOTALL)

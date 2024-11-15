@@ -85,12 +85,12 @@ Assistant has access to the following tools:
 To engage a tool, please use the following format:
 
 Question: The input question you must answer
-Thought: Do I need to use a tool? Yes
+Thought: You should always think about what to do
 Action: the action to take, should be one of [{tool_names}]
 Action Input: the input to the action
 Observation: result of the action
 ... (this Thought/Action/Action Input/Observation can repeat N times)
-Thought: Do I need to use a tool? No
+Thought: I now know the final answer
 Final Answer: The final answer to the original input question
 
 Begin!
