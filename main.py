@@ -57,10 +57,7 @@ prompt = CustomPromptTemplate(
     tools=tools,
     # partial_variables={"tools": tools, "tool_names": [tool.name for tool in tools]},
 )
-from langchain import hub
 
-prompt_ = hub.pull("guimaraesabri/datacrafter")
-print(f"\n{prompt_=}\n\n{prompt=}\n")
 agent = create_react_agent(
     llm,
     tools,
@@ -68,14 +65,7 @@ agent = create_react_agent(
     # stop_sequence=["\nObservation"],
     output_parser=CustomOutputParser(),
 )
-# agent_executor = AgentExecutor.from_agent_and_tools(
-#     agent=agent,
-#     tools=tools,
-#     verbose=True,
-#     memory=memory,
-#     show_intermediate_steps=True,
-#     handle_parsing_errors=True,
-# )
+
 agent_executor = AgentExecutor(
     agent=agent,
     tools=tools,
