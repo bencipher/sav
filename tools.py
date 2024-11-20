@@ -24,7 +24,7 @@ def initialize_tools(llm):
         verbose=True,
         prompt_text=cypher_prompt,
         allow_dangerous_requests=True,
-        qa_prompt=qa_prompt,
+        # qa_prompt=qa_prompt,
     )
 
     def movie_search_tool(query: str):
