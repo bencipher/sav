@@ -65,7 +65,7 @@ agent = create_react_agent(
     llm,
     tools,
     prompt,
-    stop_sequence=["\nObservation"],
+    # stop_sequence=["\nObservation"],
     output_parser=CustomOutputParser(),
 )
 # agent_executor = AgentExecutor.from_agent_and_tools(
