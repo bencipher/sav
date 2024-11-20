@@ -14,28 +14,8 @@ class CustomOutputParser(AgentOutputParser):
                 return_values={"output": llm_output.split("Final Answer:")[-1].strip()},
                 log=llm_output,
             )
-
-        # Try matching the answer format containing 'result'
-        match = re.search(r"'result':\s*'(.*?)'", llm_output)
-        if match:
-            result_text = match.group(1).strip()
-            return AgentFinish(return_values={"output": result_text}, log=llm_output)
-
-        # # Direct answer without "Action" or "Final Answer"
-        if not any(
-            keyword in llm_output
-            for keyword in ["Action", "Final Answer", "Observation"]
-        ):
-            return AgentFinish(
-                return_values={"output": llm_output.strip()}, log=llm_output
-            )
-
-        thought_match = re.search(r"Thought:\s*(.+)", llm_output)
-        if thought_match:
-            thought_content = thought_match.group(1).strip()
-            return AgentAction(
-                tool="ProcessThought", tool_input=thought_content, log=llm_output
-            )
+        if "\nObservation" in llm_output:
+            print("here we are")
 
         # Parse out the action and action input
         regex = r"Action\s*:?(.+?)\s*Action\s*Input\s*:?(.+)"
