@@ -4,8 +4,8 @@ import langchain
 import tiktoken
 import streamlit as st
 from langchain.agents import LLMSingleActionAgent, AgentExecutor
-from langchain.chains.llm import LLMChain
-
+from langchain.schema import StrOutputParser
+from langchain.agents import create_react_agent
 
 from config import create_llm, memory
 from parser import CustomOutputParser
@@ -46,29 +46,50 @@ output_parser = CustomOutputParser()
 tools = initialize_tools(llm)
 
 prompt = CustomPromptTemplate(
-    input_variables=["input", "chat_history", "intermediate_steps"],
+    input_variables=[
+        "input",
+        "chat_history",
+        "agent_scratchpad",
+        "tools",
+        "tool_names",
+    ],
     template=AGENT_TEMPLATE,
     tools=tools,
+    # partial_variables={"tools": tools, "tool_names": [tool.name for tool in tools]},
 )
-agent_executor = AgentExecutor.from_agent_and_tools(
-    agent=LLMSingleActionAgent(
-        llm_chain=langchain.chains.LLMChain(llm=llm, prompt=prompt),
-        output_parser=output_parser,
-        stop=["\nFinal Answer:"],
-        allowed_tools=[tool.name for tool in tools],
-    ),
+from langchain import hub
+
+prompt_ = hub.pull("guimaraesabri/datacrafter")
+print(f"\n{prompt_=}\n\n{prompt=}\n")
+agent = create_react_agent(
+    llm,
+    tools,
+    prompt,
+    stop_sequence=["\nObservation"],
+    output_parser=CustomOutputParser(),
+)
+# agent_executor = AgentExecutor.from_agent_and_tools(
+#     agent=agent,
+#     tools=tools,
+#     verbose=True,
+#     memory=memory,
+#     show_intermediate_steps=True,
+#     handle_parsing_errors=True,
+# )
+agent_executor = AgentExecutor(
+    agent=agent,
     tools=tools,
     verbose=True,
+    return_intermediate_steps=True,
     memory=memory,
-    show_intermediate_steps=True,
-    handle_parsing_errors=True,
 )
-
 
 def run_agent(question: str) -> str:
     encoding = tiktoken.encoding_for_model("gpt-4")
     input_tokens = encoding.encode(question)
-    res = agent_executor.invoke(input=question).get("output")
+    # res = agent_executor.invoke(input=question)
+    res = agent_executor.invoke({"input": question}).get("output")
+    pprint(res)
     output_tokens = encoding.encode(res)
     pprint(f"Input token: {len(input_tokens)}\nOutput token: {len(output_tokens)}")
     return res or "Too many requests, please reload and try again later"
@@ -78,6 +99,8 @@ if query := st.chat_input(
     placeholder="ask your question e.g. how much did invictus gross and what was the rating?",
 ):
     st.session_state.history.append({"role": "user", "content": query})
+    # response = run_agent(query)
+    # st.session_state.history.append({"role": "assistant", "content": response})
     try:
         response = run_agent(query)
         st.session_state.history.append({"role": "assistant", "content": response})
